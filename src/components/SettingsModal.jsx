@@ -42,10 +42,11 @@ export function SettingsModal({ onClose }) {
           <button
             type="button"
             onClick={() => updateSettings({ soundOn: !state.settings.soundOn })}
-            className={`btn-pixel pressable px-3 py-1 text-xs font-bold ${
+            className={`btn-pixel pressable flex items-center gap-1.5 px-3 py-1 text-xs font-bold ${
               state.settings.soundOn ? 'bg-sprout-sage' : 'bg-sprout-charcoal/10'
             }`}
           >
+            <PixelIcon name={state.settings.soundOn ? 'soundOn' : 'soundOff'} size={12} />
             {state.settings.soundOn ? 'On' : 'Off'}
           </button>
         </div>

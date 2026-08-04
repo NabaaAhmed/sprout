@@ -1,5 +1,7 @@
 import { useState } from 'react'
-import { GameProvider } from './context/GameContext'
+import { GameProvider, useGame } from './context/GameContext'
+import { useAmbientSound } from './hooks/useAmbientSound'
+import { useUiClickSound } from './hooks/useUiClickSound'
 import { TopBar } from './components/TopBar'
 import { NavTabs } from './components/NavTabs'
 import { HomeScreen } from './components/HomeScreen'
@@ -9,13 +11,18 @@ import { Shop } from './components/Shop'
 import { Journal } from './components/Journal'
 import { PetStats } from './components/PetStats'
 import { SettingsModal } from './components/SettingsModal'
+import { SoundPrompt } from './components/SoundPrompt'
 
 function AppShell() {
+  const { state } = useGame()
   const [tab, setTab] = useState('home')
   const [inSession, setInSession] = useState(false)
   const [completedResult, setCompletedResult] = useState(null)
   const [completedMeta, setCompletedMeta] = useState(null)
   const [showSettings, setShowSettings] = useState(false)
+
+  const { unlocked, enableNow } = useAmbientSound(state.settings.soundOn)
+  useUiClickSound()
 
   const handleSessionComplete = (result, meta) => {
     setCompletedResult(result)
@@ -43,6 +50,8 @@ function AppShell() {
       {tab === 'stats' && <PetStats />}
 
       <NavTabs active={tab} onChange={setTab} />
+
+      {!unlocked && state.settings.soundOn && <SoundPrompt onEnable={enableNow} />}
 
       {completedResult && (
         <SessionComplete result={completedResult} meta={completedMeta} onDone={dismissCelebration} />

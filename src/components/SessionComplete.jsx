@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { PetDisplay } from './PetDisplay'
 import { PixelIcon } from './icons/PixelIcon'
+import { playChime } from '../audio/sound'
 
 const SPARKLE_POSITIONS = [
   { top: '10%', left: '12%', delay: '0s' },
@@ -11,6 +12,11 @@ const SPARKLE_POSITIONS = [
 
 export function SessionComplete({ result, meta, onDone }) {
   const [displayedSp, setDisplayedSp] = useState(0)
+
+  useEffect(() => {
+    if (!result) return
+    playChime()
+  }, [result])
 
   useEffect(() => {
     if (!result) return

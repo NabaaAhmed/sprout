@@ -285,6 +285,28 @@ export const ICONS = {
     'cc....cc',
   ],
 
+  soundOn: [
+    '.cc.....',
+    'ccsc.c..',
+    'ccsc....',
+    'ccsc.c..',
+    'ccsc....',
+    'ccsc.c..',
+    '.cc.....',
+    '........',
+  ],
+
+  soundOff: [
+    '.cc.....',
+    'ccsc...c',
+    'ccsc..c.',
+    'ccsc.c..',
+    'ccsc..c.',
+    'ccsc...c',
+    '.cc.....',
+    '........',
+  ],
+
   pencil: [
     '.....cc.',
     '....cgc.',
