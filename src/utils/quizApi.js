@@ -1,17 +1,16 @@
-const REQUEST_TIMEOUT_MS = 20000
+const REQUEST_TIMEOUT_MS = 45000
 
 /**
- * The Worker URL is provided via a Vite env var so the deployed frontend
- * can point at the user's own Cloudflare Worker without code changes.
- * See .env.example for setup instructions.
+ * Cloudflare Worker URL from Vite env (never put the Gemini key in the frontend).
+ * See .env.example and cloudflare-worker/README.md.
  */
 export function getQuizWorkerUrl() {
   return (import.meta.env.VITE_QUIZ_WORKER_URL ?? '').trim()
 }
 
 /**
- * Validates that a parsed quiz payload roughly matches the expected shape:
- * a non-empty array of { type, question, options?, answer } objects.
+ * Validates quiz shape used by StudyNotes:
+ * [{ type, question, options?, answer }, ...]
  */
 function isValidQuiz(quiz) {
   if (!Array.isArray(quiz) || quiz.length === 0) return false
@@ -26,9 +25,8 @@ function isValidQuiz(quiz) {
 }
 
 /**
- * Calls the Cloudflare Worker to turn study notes into a pop quiz.
- * Always resolves (never throws) — callers get a discriminated result so
- * the UI can show a friendly message instead of crashing.
+ * Calls the Cloudflare Worker (Gemini proxy) to turn study notes into a quiz.
+ * Always resolves — never throws — so the UI can show a friendly message.
  *
  * @param {string} notesText
  * @returns {Promise<{ ok: true, quiz: Array } | { ok: false, error: string }>}

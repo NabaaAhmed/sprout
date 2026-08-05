@@ -10,6 +10,13 @@ function makeId() {
   return `note-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`
 }
 
+function errorMessageFor(code) {
+  if (code === 'not-configured') {
+    return 'Quiz worker not configured yet — set VITE_QUIZ_WORKER_URL in your .env (see cloudflare-worker/README.md).'
+  }
+  return FRIENDLY_ERROR
+}
+
 export function StudyNotes() {
   const { state, addStudyNote, deleteStudyNote } = useGame()
   const [text, setText] = useState('')
@@ -38,7 +45,7 @@ export function StudyNotes() {
     })
 
     if (!result.ok) {
-      setLastError(FRIENDLY_ERROR)
+      setLastError(errorMessageFor(result.error))
     } else {
       setText('')
     }
@@ -55,7 +62,7 @@ export function StudyNotes() {
       {!workerConfigured && (
         <p className="text-[11px] font-semibold text-sprout-brown bg-sprout-goldSoft/40 border border-sprout-gold/40 rounded-xl px-3 py-2 leading-relaxed">
           Quiz worker not configured yet — set <code className="font-mono">VITE_QUIZ_WORKER_URL</code> in your{' '}
-          <code className="font-mono">.env</code> to enable AI-generated quizzes. Notes will still be saved.
+          <code className="font-mono">.env</code> after deploying the Cloudflare Worker. Notes will still be saved.
         </p>
       )}
 
@@ -184,8 +191,8 @@ function QuizQuestion({ index, question }) {
                   isCorrectOption
                     ? 'bg-sprout-sage/45 border-sprout-moss/40 font-bold text-sprout-charcoal'
                     : isPickedWrong
-                    ? 'bg-sprout-blushSoft/45 border-sprout-blush/40'
-                    : 'bg-white border-sprout-charcoal/10 hover:bg-sprout-sage/10'
+                      ? 'bg-sprout-blushSoft/45 border-sprout-blush/40'
+                      : 'bg-white border-sprout-charcoal/10 hover:bg-sprout-sage/10'
                 }`}
               >
                 {opt}
