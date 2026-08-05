@@ -107,11 +107,54 @@ export const SHOP_ITEMS = [
     cost: 65,
     description: 'Little glowing friends for the shelf.',
   },
+
+  // Stickers — small multi-equip decorations (layer over the pet)
+  {
+    id: 'sticker-bandana',
+    category: 'stickers',
+    name: 'Tiny Bandana',
+    icon: 'bandana',
+    cost: 25,
+    description: 'A soft little kerchief for the neck.',
+  },
+  {
+    id: 'sticker-sunglasses',
+    category: 'stickers',
+    name: 'Sunny Specs',
+    icon: 'sunglasses',
+    cost: 30,
+    description: 'Cool shades that sit over the eyes.',
+  },
+  {
+    id: 'sticker-flower',
+    category: 'stickers',
+    name: 'Ear Flower',
+    icon: 'flower',
+    cost: 20,
+    description: 'A tiny blossom tucked by the ear.',
+  },
+  {
+    id: 'sticker-sparkles',
+    category: 'stickers',
+    name: 'Sparkle Stickers',
+    icon: 'sparkleStickers',
+    cost: 22,
+    description: 'A couple of twinkly stars.',
+  },
+  {
+    id: 'sticker-bow',
+    category: 'stickers',
+    name: 'Soft Bow',
+    icon: 'bow',
+    cost: 28,
+    description: 'A cute bow perched up top.',
+  },
 ]
 
 export const SHOP_CATEGORIES = [
   { id: 'food', label: 'Food', icon: 'berry' },
   { id: 'decor', label: 'Decor', icon: 'plant' },
   { id: 'outfits', label: 'Outfits', icon: 'scarf' },
+  { id: 'stickers', label: 'Stickers', icon: 'bow' },
   { id: 'seasonal', label: 'Seasonal', icon: 'snowflake' },
 ]

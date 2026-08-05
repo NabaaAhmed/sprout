@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useCallback, useState } from 'react'
 import { useGame } from '../context/GameContext'
 import { SHOP_ITEMS } from '../data/shopItems'
 import { STAGES } from '../data/petStages'
@@ -6,13 +6,16 @@ import { PetDisplay } from './PetDisplay'
 import { PetSprite } from './PetSprite'
 import { StatBar } from './StatBar'
 import { PixelIcon } from './icons/PixelIcon'
+import { Toast } from './Toast'
+import { FeedCeremony } from './FeedCeremony'
 
 export function PetStats() {
-  const { state, effectiveAffection, mood, stageInfo, feedPet, setPetName } = useGame()
+  const { state, effectiveAffection, mood, stageInfo, consumeFood, setPetName } = useGame()
   const { current, next, progress } = stageInfo
   const [editingName, setEditingName] = useState(false)
   const [nameDraft, setNameDraft] = useState(state.pet.name)
   const [toast, setToast] = useState(null)
+  const [feedingItem, setFeedingItem] = useState(null)
 
   const foodCounts = state.inventory.food.reduce((acc, id) => {
     acc[id] = (acc[id] ?? 0) + 1
@@ -20,15 +23,18 @@ export function PetStats() {
   }, {})
   const foodEntries = Object.entries(foodCounts)
 
-  const showToast = (message) => {
-    setToast(message)
-    setTimeout(() => setToast(null), 1600)
+  const handleFeed = (id) => {
+    if (feedingItem) return
+    const outcome = consumeFood(id)
+    if (outcome.success) setFeedingItem(outcome.item)
   }
 
-  const handleFeed = (id) => {
-    const outcome = feedPet(id)
-    if (outcome.success) showToast(`+${outcome.affectionBoost} affection`)
-  }
+  const handleFeedFinished = useCallback(({ affectionBoost }) => {
+    setFeedingItem((current) => {
+      if (current) setToast(`Fed ${current.name} — +${affectionBoost} affection`)
+      return null
+    })
+  }, [])
 
   const saveName = () => {
     setPetName(nameDraft)
@@ -40,7 +46,13 @@ export function PetStats() {
       <h2 className="pixel-text text-xl text-sprout-moss">Pet Stats</h2>
 
       <div className="panel-paper w-full max-w-md p-6 flex flex-col items-center gap-2.5 bg-sprout-sky/20">
-        <PetDisplay stage={current.id} mood={mood} equippedOutfit={state.pet.equippedOutfit} size="lg" />
+        <PetDisplay
+          stage={current.id}
+          mood={mood}
+          equippedOutfit={state.pet.equippedOutfit}
+          equippedStickers={state.pet.equippedStickers ?? []}
+          size="lg"
+        />
 
         {editingName ? (
           <div className="flex items-center gap-2 mt-1">
@@ -90,7 +102,10 @@ export function PetStats() {
           <p className="text-xs font-bold text-sprout-charcoal/50 mb-3">Evolution stages</p>
           <div className="flex justify-between">
             {STAGES.map((s) => (
-              <div key={s.id} className={`flex flex-col items-center gap-1 flex-1 ${s.id <= current.id ? '' : 'opacity-35 grayscale'}`}>
+              <div
+                key={s.id}
+                className={`flex flex-col items-center gap-1 flex-1 ${s.id <= current.id ? '' : 'opacity-35 grayscale'}`}
+              >
                 <PetSprite stage={s.id} pixelSize={30} />
                 <span
                   className={`text-[10px] font-bold text-center mt-1 ${
@@ -119,6 +134,7 @@ export function PetStats() {
                   key={id}
                   type="button"
                   onClick={() => handleFeed(id)}
+                  disabled={Boolean(feedingItem)}
                   className="btn-pixel pressable flex flex-col items-center gap-1.5 py-2.5 bg-sprout-blushSoft/25"
                 >
                   <PixelIcon name={item.icon} size={26} />
@@ -130,11 +146,8 @@ export function PetStats() {
         )}
       </div>
 
-      {toast && (
-        <div className="fixed bottom-24 left-1/2 -translate-x-1/2 panel-paper px-4 py-2 bg-sprout-charcoal text-sprout-cream text-sm font-bold z-30 animate-fadeIn">
-          {toast}
-        </div>
-      )}
+      <Toast message={toast} onDone={() => setToast(null)} />
+      {feedingItem && <FeedCeremony item={feedingItem} onFinished={handleFeedFinished} />}
     </div>
   )
 }

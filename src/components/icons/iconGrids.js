@@ -317,4 +317,60 @@ export const ICONS = {
     'cc......',
     '........',
   ],
+
+  // Stickers — tiny wearable decorations (multi-equip)
+  sunglasses: [
+    '........',
+    'cccccccc',
+    'ckkcckkc',
+    'ckkcckkc',
+    'cccccccc',
+    '........',
+    '........',
+    '........',
+  ],
+
+  bandana: [
+    '........',
+    '..cccc..',
+    '.cbbbbc.',
+    'cbbbbbbc',
+    '.cbbbc..',
+    '..cbc...',
+    '...c....',
+    '........',
+  ],
+
+  flower: [
+    '...c....',
+    '..cbc...',
+    '.cbpbc..',
+    'cbpgpbc.',
+    '.cbpbc..',
+    '..cbc...',
+    '...m....',
+    '........',
+  ],
+
+  sparkleStickers: [
+    'c...c...',
+    '.c.c.c..',
+    '..c..c..',
+    '.c.c....',
+    'c...c.c.',
+    '.....c..',
+    '....c.c.',
+    '........',
+  ],
+
+  bow: [
+    '........',
+    'cc...cc.',
+    'cbbcbbc.',
+    '.cbbbcc.',
+    '..ccc...',
+    '.cbbbcc.',
+    'cbbcbbc.',
+    'cc...cc.',
+  ],
 }

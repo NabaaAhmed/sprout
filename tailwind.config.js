@@ -67,6 +67,15 @@ export default {
           '0%, 100%': { transform: 'translateY(0)' },
           '50%': { transform: 'translateY(-3px)' },
         },
+        foodPop: {
+          '0%': { opacity: '0', transform: 'scale(0.4) translateY(8px)' },
+          '70%': { opacity: '1', transform: 'scale(1.08) translateY(-2px)' },
+          '100%': { opacity: '1', transform: 'scale(1) translateY(0)' },
+        },
+        foodFade: {
+          '0%': { opacity: '1', transform: 'scale(1)' },
+          '100%': { opacity: '0', transform: 'scale(0.6) translateY(4px)' },
+        },
       },
       animation: {
         breathe: 'breathe 4.2s ease-in-out infinite',
@@ -75,6 +84,8 @@ export default {
         sparkle: 'sparkle 2.6s ease-in-out infinite',
         drift: 'drift 7.5s ease-in-out infinite',
         gentleFloat: 'gentleFloat 3.2s ease-in-out infinite',
+        foodPop: 'foodPop 0.32s ease-out both',
+        foodFade: 'foodFade 0.28s ease-in both',
       },
     },
   },

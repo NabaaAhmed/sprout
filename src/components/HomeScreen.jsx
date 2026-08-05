@@ -32,7 +32,13 @@ export function HomeScreen({ onStartSession }) {
         )}
 
         <div className="relative flex flex-col items-center justify-center py-14">
-          <PetDisplay stage={current.id} mood={mood} equippedOutfit={state.pet.equippedOutfit} activity="idle" />
+          <PetDisplay
+            stage={current.id}
+            mood={mood}
+            equippedOutfit={state.pet.equippedOutfit}
+            equippedStickers={state.pet.equippedStickers ?? []}
+            activity="idle"
+          />
           <p className="mt-4 pixel-text text-sprout-charcoal text-base">{state.pet.name}</p>
           <p className="text-xs text-sprout-charcoal/50 font-semibold">{current.name}</p>
         </div>

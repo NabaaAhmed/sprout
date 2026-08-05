@@ -9,7 +9,7 @@ export function getQuizWorkerUrl() {
 }
 
 /**
- * Validates quiz shape used by StudyNotes:
+ * Validates quiz shape used by Quiz.jsx:
  * [{ type, question, options?, answer }, ...]
  */
 function isValidQuiz(quiz) {
@@ -37,6 +37,11 @@ export async function generateQuiz(notesText) {
     return { ok: false, error: 'not-configured' }
   }
 
+  const trimmed = String(notesText ?? '').trim()
+  if (!trimmed) {
+    return { ok: false, error: 'empty-notes' }
+  }
+
   const controller = new AbortController()
   const timeoutId = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS)
 
@@ -44,7 +49,7 @@ export async function generateQuiz(notesText) {
     const response = await fetch(workerUrl, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ notes: notesText }),
+      body: JSON.stringify({ notes: trimmed }),
       signal: controller.signal,
     })
 

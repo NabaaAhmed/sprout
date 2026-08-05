@@ -1,38 +1,63 @@
-import { useState } from 'react'
+import { useCallback, useState } from 'react'
 import { useGame } from '../context/GameContext'
 import { SHOP_CATEGORIES, SHOP_ITEMS } from '../data/shopItems'
 import { PixelIcon } from './icons/PixelIcon'
+import { Toast } from './Toast'
+import { FeedCeremony } from './FeedCeremony'
+
+function inventoryBucket(category) {
+  if (category === 'food') return 'food'
+  if (category === 'outfits') return 'outfits'
+  if (category === 'stickers') return 'stickers'
+  return 'decor'
+}
 
 export function Shop() {
-  const { state, buyItem, feedPet, equipOutfit } = useGame()
+  const { state, buyItem, consumeFood, equipOutfit, toggleSticker } = useGame()
   const [category, setCategory] = useState('food')
   const [toast, setToast] = useState(null)
+  const [feedingItem, setFeedingItem] = useState(null)
 
   const items = SHOP_ITEMS.filter((i) => i.category === category)
 
-  const showToast = (message) => {
-    setToast(message)
-    setTimeout(() => setToast(null), 1800)
-  }
-
   const isOwned = (item) => {
     if (item.category === 'food') return false
-    const bucket = item.category === 'outfits' ? 'outfits' : 'decor'
-    return state.inventory[bucket].includes(item.id)
+    const bucket = inventoryBucket(item.category)
+    return (state.inventory[bucket] ?? []).includes(item.id)
   }
 
   const ownedFoodCount = (id) => state.inventory.food.filter((f) => f === id).length
 
   const handleBuy = (item) => {
     const outcome = buyItem(item.id)
-    if (outcome.success) showToast(`Bought ${item.name}`)
-    else if (outcome.reason === 'insufficient-funds') showToast('Not enough SP')
-    else if (outcome.reason === 'already-owned') showToast('Already owned')
+    if (outcome.success) setToast(`Bought ${item.name}`)
+    else if (outcome.reason === 'insufficient-funds') setToast('Not enough SP')
+    else if (outcome.reason === 'already-owned') setToast('Already owned')
   }
 
   const handleFeed = (item) => {
-    const outcome = feedPet(item.id)
-    if (outcome.success) showToast(`Fed ${item.name} — +${outcome.affectionBoost} affection`)
+    if (feedingItem) return
+    const outcome = consumeFood(item.id)
+    if (outcome.success) setFeedingItem(outcome.item)
+  }
+
+  const handleFeedFinished = useCallback(({ affectionBoost }) => {
+    setFeedingItem((current) => {
+      if (current) setToast(`Fed ${current.name} — +${affectionBoost} affection`)
+      return null
+    })
+  }, [])
+
+  const handleOutfit = (item) => {
+    const equipped = state.pet.equippedOutfit === item.id
+    equipOutfit(equipped ? 'none' : item.id)
+    setToast(equipped ? `Unequipped ${item.name}` : `Equipped ${item.name}`)
+  }
+
+  const handleSticker = (item) => {
+    const equipped = (state.pet.equippedStickers ?? []).includes(item.id)
+    toggleSticker(item.id)
+    setToast(equipped ? `Unequipped ${item.name}` : `Equipped ${item.name}`)
   }
 
   return (
@@ -60,6 +85,7 @@ export function Shop() {
           const owned = isOwned(item)
           const affordable = state.currency.sproutPoints >= item.cost
           const foodQty = item.category === 'food' ? ownedFoodCount(item.id) : 0
+          const stickerOn = (state.pet.equippedStickers ?? []).includes(item.id)
 
           return (
             <div key={item.id} className="panel-paper p-4 flex flex-col items-center gap-2 bg-white/70">
@@ -89,7 +115,7 @@ export function Shop() {
                   <button
                     type="button"
                     onClick={() => handleFeed(item)}
-                    disabled={foodQty === 0}
+                    disabled={foodQty === 0 || Boolean(feedingItem)}
                     className="btn-pixel pressable flex-1 py-1.5 text-xs font-bold bg-sprout-blushSoft"
                   >
                     Feed
@@ -99,12 +125,22 @@ export function Shop() {
                 item.category === 'outfits' ? (
                   <button
                     type="button"
-                    onClick={() => equipOutfit(state.pet.equippedOutfit === item.id ? 'none' : item.id)}
+                    onClick={() => handleOutfit(item)}
                     className={`btn-pixel pressable w-full py-1.5 text-xs font-bold ${
                       state.pet.equippedOutfit === item.id ? 'bg-sprout-moss text-white' : 'bg-sprout-sage'
                     }`}
                   >
                     {state.pet.equippedOutfit === item.id ? 'Equipped' : 'Equip'}
+                  </button>
+                ) : item.category === 'stickers' ? (
+                  <button
+                    type="button"
+                    onClick={() => handleSticker(item)}
+                    className={`btn-pixel pressable w-full py-1.5 text-xs font-bold ${
+                      stickerOn ? 'bg-sprout-moss text-white' : 'bg-sprout-sage'
+                    }`}
+                  >
+                    {stickerOn ? 'Equipped' : 'Equip'}
                   </button>
                 ) : (
                   <span className="w-full text-center text-xs font-bold text-sprout-moss py-1.5">Owned</span>
@@ -124,11 +160,8 @@ export function Shop() {
         })}
       </div>
 
-      {toast && (
-        <div className="fixed bottom-24 left-1/2 -translate-x-1/2 panel-paper px-4 py-2 bg-sprout-charcoal text-sprout-cream text-sm font-bold z-30 animate-fadeIn">
-          {toast}
-        </div>
-      )}
+      <Toast message={toast} onDone={() => setToast(null)} />
+      {feedingItem && <FeedCeremony item={feedingItem} onFinished={handleFeedFinished} />}
     </div>
   )
 }

@@ -52,7 +52,14 @@ function createDefaultState() {
       stickers: [],
     },
     sessionHistory: [],
+    /** @deprecated Legacy study-note entries; kept for soft-merge of old saves. */
     notes: [],
+    /** Draft text for the Quiz tab input (persists across refresh). */
+    quizNotesDraft: '',
+    /** Freeform Journal notes (no AI). */
+    journalNotes: '',
+    /** Completed quiz attempts with scores. */
+    quizAttempts: [],
     settings: {
       soundOn: true,
       defaultSessionLength: 25,
@@ -61,10 +68,44 @@ function createDefaultState() {
   }
 }
 
+/** Soft-merge older localStorage saves that predate stickers/notes fields. */
+function normalizeState(raw) {
+  const defaults = createDefaultState()
+  if (!raw || typeof raw !== 'object') return defaults
+  return {
+    ...defaults,
+    ...raw,
+    pet: {
+      ...defaults.pet,
+      ...(raw.pet ?? {}),
+      equippedStickers: Array.isArray(raw.pet?.equippedStickers) ? raw.pet.equippedStickers : [],
+    },
+    currency: { ...defaults.currency, ...(raw.currency ?? {}) },
+    streak: { ...defaults.streak, ...(raw.streak ?? {}) },
+    inventory: {
+      ...defaults.inventory,
+      ...(raw.inventory ?? {}),
+      stickers: Array.isArray(raw.inventory?.stickers) ? raw.inventory.stickers : [],
+    },
+    sessionHistory: Array.isArray(raw.sessionHistory) ? raw.sessionHistory : [],
+    notes: Array.isArray(raw.notes) ? raw.notes : [],
+    quizNotesDraft: typeof raw.quizNotesDraft === 'string' ? raw.quizNotesDraft : '',
+    journalNotes: typeof raw.journalNotes === 'string' ? raw.journalNotes : '',
+    quizAttempts: Array.isArray(raw.quizAttempts) ? raw.quizAttempts : [],
+    settings: {
+      ...defaults.settings,
+      ...(raw.settings ?? {}),
+      focusLabels: Array.isArray(raw.settings?.focusLabels)
+        ? raw.settings.focusLabels
+        : [...DEFAULT_FOCUS_LABELS],
+    },
+  }
+}
+
 const GameContext = createContext(null)
 
 export function GameProvider({ children }) {
-  const [state, setState] = usePersistedState(STORAGE_KEY, createDefaultState)
+  const [state, setState] = usePersistedState(STORAGE_KEY, (raw) => normalizeState(raw))
 
   const lastInteractionDate = useMemo(() => {
     const candidates = [state.pet.lastFedTimestamp, state.streak.lastSessionDate, state.pet.createdAt].filter(
@@ -290,7 +331,7 @@ export function GameProvider({ children }) {
   const equipOutfit = useCallback(
     (outfitId) => {
       setState((prev) => {
-        if (outfitId !== 'none' && !prev.inventory.outfits.includes(outfitId)) return prev
+        if (outfitId !== 'none' && !(prev.inventory.outfits ?? []).includes(outfitId)) return prev
         return { ...prev, pet: { ...prev.pet, equippedOutfit: outfitId } }
       })
     },
@@ -317,16 +358,38 @@ export function GameProvider({ children }) {
     setState(createDefaultState())
   }, [setState])
 
-  const addStudyNote = useCallback(
-    (note) => {
-      setState((prev) => ({ ...prev, notes: [...(prev.notes ?? []), note] }))
+  const setQuizNotesDraft = useCallback(
+    (text) => {
+      setState((prev) => ({ ...prev, quizNotesDraft: String(text ?? '').slice(0, 8000) }))
     },
     [setState]
   )
 
-  const deleteStudyNote = useCallback(
-    (id) => {
-      setState((prev) => ({ ...prev, notes: (prev.notes ?? []).filter((n) => n.id !== id) }))
+  const setJournalNotes = useCallback(
+    (text) => {
+      setState((prev) => ({ ...prev, journalNotes: String(text ?? '').slice(0, 20000) }))
+    },
+    [setState]
+  )
+
+  const awardSproutPoints = useCallback(
+    (amount) => {
+      const n = Math.floor(Number(amount) || 0)
+      if (n <= 0) return
+      setState((prev) => ({
+        ...prev,
+        currency: { ...prev.currency, sproutPoints: prev.currency.sproutPoints + n },
+      }))
+    },
+    [setState]
+  )
+
+  const saveQuizAttempt = useCallback(
+    (attempt) => {
+      setState((prev) => ({
+        ...prev,
+        quizAttempts: [...(prev.quizAttempts ?? []), attempt].slice(-50),
+      }))
     },
     [setState]
   )
@@ -349,8 +412,10 @@ export function GameProvider({ children }) {
       setPetName,
       updateSettings,
       resetGame,
-      addStudyNote,
-      deleteStudyNote,
+      setQuizNotesDraft,
+      setJournalNotes,
+      awardSproutPoints,
+      saveQuizAttempt,
     }),
     [
       state,
@@ -369,8 +434,10 @@ export function GameProvider({ children }) {
       setPetName,
       updateSettings,
       resetGame,
-      addStudyNote,
-      deleteStudyNote,
+      setQuizNotesDraft,
+      setJournalNotes,
+      awardSproutPoints,
+      saveQuizAttempt,
     ]
   )
 

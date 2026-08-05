@@ -9,6 +9,7 @@ import { FocusTimer } from './components/FocusTimer'
 import { SessionComplete } from './components/SessionComplete'
 import { Shop } from './components/Shop'
 import { Journal } from './components/Journal'
+import { Quiz } from './components/Quiz'
 import { PetStats } from './components/PetStats'
 import { SettingsModal } from './components/SettingsModal'
 import { SoundPrompt } from './components/SoundPrompt'
@@ -46,6 +47,7 @@ function AppShell() {
 
       {tab === 'home' && <HomeScreen onStartSession={() => setInSession(true)} />}
       {tab === 'shop' && <Shop />}
+      {tab === 'quiz' && <Quiz />}
       {tab === 'journal' && <Journal />}
       {tab === 'stats' && <PetStats />}
 

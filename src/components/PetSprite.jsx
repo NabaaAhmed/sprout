@@ -8,7 +8,7 @@ import { PixelIcon } from './icons/PixelIcon'
  * every row — guarantees every row comes out the same width and keeps
  * the silhouette perfectly round (no pointed tip) at any size.
  */
-function buildBodyGrid(size) {
+function buildBodyGrid(size, { chewing = false, mouthOpen = false } = {}) {
   const center = (size - 1) / 2
   const radius = size / 2 - 0.5
   const shadeFrom = size - Math.max(2, Math.round(size * 0.22))
@@ -19,6 +19,7 @@ function buildBodyGrid(size) {
   const eyeOffset = Math.max(1, Math.round(radius * 0.36))
   const cheekRow = eyeRow + 1
   const cheekOffset = Math.max(2, Math.round(radius * 0.58))
+  const mouthRow = cheekRow + 1
 
   const dist = (x, y) => Math.hypot(x - center, y - center)
 
@@ -56,6 +57,16 @@ function buildBodyGrid(size) {
   setCell(Math.round(center - cheekOffset), cheekRow, 'b')
   setCell(Math.round(center + cheekOffset), cheekRow, 'b')
 
+  // Mouth only appears during the feeding chew sequence so idle pets keep
+  // their original face. Closed = tiny dash; open = a slightly taller oval.
+  if (chewing) {
+    const mx = Math.round(center)
+    setCell(mx - 1, mouthRow, 'c')
+    setCell(mx, mouthRow, 'c')
+    setCell(mx + 1, mouthRow, 'c')
+    if (mouthOpen) setCell(mx, mouthRow + 1, 'c')
+  }
+
   return rows
 }
 
@@ -90,8 +101,8 @@ const LEAF = buildLeafGrid()
 const LEAF_ASPECT = 9 / 7
 const FLOWER = ['..c.c..', '.cbbbc.', 'cbbgbbc', '.cbbbc.', '..ccc..']
 
-function BodyLayer({ size, pixelSize }) {
-  const grid = useMemo(() => buildBodyGrid(size), [size])
+function BodyLayer({ size, pixelSize, chewing, mouthOpen }) {
+  const grid = useMemo(() => buildBodyGrid(size, { chewing, mouthOpen }), [size, chewing, mouthOpen])
   return <PixelIcon grid={grid} size={pixelSize} />
 }
 
@@ -102,7 +113,7 @@ function BodyLayer({ size, pixelSize }) {
  * pixels, via negative margin) for the leaf's stem tip to visually "plug
  * into" the head — never enough to merge into one pointed silhouette.
  */
-export function PetSprite({ stage = 1, pixelSize = 96, className = '' }) {
+export function PetSprite({ stage = 1, pixelSize = 96, className = '', chewing = false, mouthOpen = false }) {
   const bodySize = 15
   const leafWidth = pixelSize * 0.3
   const leafHeight = leafWidth * LEAF_ASPECT
@@ -157,7 +168,7 @@ export function PetSprite({ stage = 1, pixelSize = 96, className = '' }) {
         />
       )}
 
-      <BodyLayer size={bodySize} pixelSize={pixelSize} />
+      <BodyLayer size={bodySize} pixelSize={pixelSize} chewing={chewing} mouthOpen={mouthOpen} />
 
       {stage >= 4 && (
         <>

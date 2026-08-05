@@ -6,13 +6,23 @@ import { useEffect, useRef, useState } from 'react'
  */
 export function usePersistedState(key, initialValue) {
   const [state, setState] = useState(() => {
+    const fallback = typeof initialValue === 'function' ? initialValue() : initialValue
     try {
       const stored = window.localStorage.getItem(key)
-      if (stored != null) return JSON.parse(stored)
+      if (stored != null) {
+        const parsed = JSON.parse(stored)
+        // If the fallback factory returned a normalized object shape, prefer
+        // re-running a normalizer when the caller passed one via `initialValue`
+        // that accepts the raw parse — otherwise return parsed as-is.
+        if (typeof initialValue === 'function' && initialValue.length >= 1) {
+          return initialValue(parsed)
+        }
+        return parsed
+      }
     } catch (err) {
       console.warn(`usePersistedState: failed to read "${key}"`, err)
     }
-    return typeof initialValue === 'function' ? initialValue() : initialValue
+    return fallback
   })
 
   const keyRef = useRef(key)

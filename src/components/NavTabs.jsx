@@ -3,6 +3,7 @@ import { PixelIcon } from './icons/PixelIcon'
 const TABS = [
   { id: 'home', label: 'Home', icon: 'home' },
   { id: 'shop', label: 'Shop', icon: 'shop' },
+  { id: 'quiz', label: 'Quiz', icon: 'book' },
   { id: 'journal', label: 'Journal', icon: 'journal' },
   { id: 'stats', label: 'Pet', icon: 'heart' },
 ]
@@ -22,8 +23,8 @@ export function NavTabs({ active, onChange }) {
                 isActive ? 'bg-sprout-sage/35' : 'hover:bg-sprout-sage/10'
               }`}
             >
-              <PixelIcon name={tab.icon} size={18} />
-              <span className={`pixel-text text-[12px] ${isActive ? 'text-sprout-moss' : 'text-sprout-charcoal/50'}`}>
+              <PixelIcon name={tab.icon} size={16} />
+              <span className={`pixel-text text-[10px] ${isActive ? 'text-sprout-moss' : 'text-sprout-charcoal/50'}`}>
                 {tab.label}
               </span>
             </button>
