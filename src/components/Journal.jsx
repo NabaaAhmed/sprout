@@ -1,6 +1,7 @@
 import { useMemo } from 'react'
 import { useGame } from '../context/GameContext'
 import { PixelIcon } from './icons/PixelIcon'
+import { StudyNotes } from './StudyNotes'
 
 const WEEKS_TO_SHOW = 18
 const DAY_MS = 24 * 60 * 60 * 1000
@@ -129,6 +130,8 @@ export function Journal() {
           </ul>
         )}
       </div>
+
+      <StudyNotes />
     </div>
   )
 }

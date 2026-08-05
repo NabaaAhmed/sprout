@@ -2,11 +2,18 @@ import { useState } from 'react'
 import { useGame } from '../context/GameContext'
 import { PixelIcon } from './icons/PixelIcon'
 import { DEFAULT_FOCUS_LABELS } from '../data/focusLabels'
+import { getAmbientVariant, setAmbientVariant } from '../audio/sound'
 
 export function SettingsModal({ onClose }) {
   const { state, updateSettings, resetGame } = useGame()
   const [confirmingReset, setConfirmingReset] = useState(false)
+  const [ambientVariant, setAmbientVariantState] = useState(getAmbientVariant())
   const focusLabels = state.settings.focusLabels ?? DEFAULT_FOCUS_LABELS
+
+  const chooseAmbientVariant = (key) => {
+    setAmbientVariant(key)
+    setAmbientVariantState(key)
+  }
 
   const updateLabelAt = (index, value) => {
     const next = [...focusLabels]
@@ -50,6 +57,46 @@ export function SettingsModal({ onClose }) {
             {state.settings.soundOn ? 'On' : 'Off'}
           </button>
         </div>
+
+        <div>
+          <div className="flex items-center justify-between mb-1.5">
+            <span className="text-sm font-bold">Ambient style</span>
+          </div>
+          <p className="text-[11px] text-sprout-charcoal/45 mb-2">
+            Comparing two directions — pick whichever feels right.
+          </p>
+          <div className="flex flex-col gap-1.5">
+            <button
+              type="button"
+              onClick={() => chooseAmbientVariant('a')}
+              className={`btn-pixel pressable py-1.5 text-xs font-bold ${
+                ambientVariant === 'a' ? 'bg-sprout-sage' : 'bg-sprout-cream'
+              }`}
+            >
+              A · Twinkle
+            </button>
+            <button
+              type="button"
+              onClick={() => chooseAmbientVariant('b')}
+              className={`btn-pixel pressable py-1.5 text-xs font-bold ${
+                ambientVariant === 'b' ? 'bg-sprout-sage' : 'bg-sprout-cream'
+              }`}
+            >
+              B · Soft &amp; sparse
+            </button>
+            <button
+              type="button"
+              onClick={() => chooseAmbientVariant('c')}
+              className={`btn-pixel pressable py-1.5 text-xs font-bold ${
+                ambientVariant === 'c' ? 'bg-sprout-sage' : 'bg-sprout-cream'
+              }`}
+            >
+              C · Dreamy piano
+            </button>
+          </div>
+        </div>
+
+        <hr className="border-sprout-charcoal/10" />
 
         <div className="flex items-center justify-between gap-2">
           <span className="text-sm font-bold">Default session</span>

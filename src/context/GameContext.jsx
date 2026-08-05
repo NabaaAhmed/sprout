@@ -34,6 +34,7 @@ function createDefaultState() {
       affection: 100,
       lastFedTimestamp: null,
       equippedOutfit: 'none',
+      equippedStickers: [],
       createdAt: nowISO(),
     },
     currency: {
@@ -48,8 +49,10 @@ function createDefaultState() {
       food: [],
       decor: [],
       outfits: [],
+      stickers: [],
     },
     sessionHistory: [],
+    notes: [],
     settings: {
       soundOn: true,
       defaultSessionLength: 25,
@@ -171,8 +174,15 @@ export function GameProvider({ children }) {
       setState((prev) => {
         if (prev.currency.sproutPoints < item.cost) return prev
 
-        const bucket = item.category === 'food' ? 'food' : item.category === 'outfits' ? 'outfits' : 'decor'
-        const alreadyOwned = bucket !== 'food' && prev.inventory[bucket].includes(item.id)
+        const bucket =
+          item.category === 'food'
+            ? 'food'
+            : item.category === 'outfits'
+              ? 'outfits'
+              : item.category === 'stickers'
+                ? 'stickers'
+                : 'decor'
+        const alreadyOwned = bucket !== 'food' && (prev.inventory[bucket] ?? []).includes(item.id)
         if (alreadyOwned) {
           outcome = { success: false, reason: 'already-owned' }
           return prev
@@ -184,7 +194,7 @@ export function GameProvider({ children }) {
           currency: { ...prev.currency, sproutPoints: prev.currency.sproutPoints - item.cost },
           inventory: {
             ...prev.inventory,
-            [bucket]: [...prev.inventory[bucket], item.id],
+            [bucket]: [...(prev.inventory[bucket] ?? []), item.id],
           },
         }
       })
@@ -224,6 +234,59 @@ export function GameProvider({ children }) {
     [setState, daysSinceInteraction]
   )
 
+  // Split out of feedPet so the UI can play a feeding/chewing animation and
+  // only apply the real affection change once that sequence finishes, while
+  // still consuming the item from inventory immediately (so it can't be
+  // double-fed while the animation plays).
+  const consumeFood = useCallback(
+    (foodId) => {
+      const item = SHOP_ITEMS.find((i) => i.id === foodId && i.category === 'food')
+      if (!item) return { success: false }
+
+      let outcome = { success: false }
+      setState((prev) => {
+        const idx = prev.inventory.food.indexOf(foodId)
+        if (idx === -1) return prev
+
+        const nextFood = [...prev.inventory.food]
+        nextFood.splice(idx, 1)
+
+        outcome = { success: true, item }
+        return { ...prev, inventory: { ...prev.inventory, food: nextFood } }
+      })
+      return outcome
+    },
+    [setState]
+  )
+
+  const applyFeedBoost = useCallback(
+    (affectionBoost) => {
+      setState((prev) => {
+        const decayed = Math.min(
+          100,
+          Math.max(AFFECTION_FLOOR, prev.pet.affection - AFFECTION_DECAY_PER_DAY * daysSinceInteraction)
+        )
+        const boosted = Math.min(100, decayed + affectionBoost)
+        return { ...prev, pet: { ...prev.pet, affection: boosted, lastFedTimestamp: nowISO() } }
+      })
+    },
+    [setState, daysSinceInteraction]
+  )
+
+  const toggleSticker = useCallback(
+    (stickerId) => {
+      setState((prev) => {
+        if (!(prev.inventory.stickers ?? []).includes(stickerId)) return prev
+        const equipped = prev.pet.equippedStickers ?? []
+        const nextEquipped = equipped.includes(stickerId)
+          ? equipped.filter((id) => id !== stickerId)
+          : [...equipped, stickerId]
+        return { ...prev, pet: { ...prev.pet, equippedStickers: nextEquipped } }
+      })
+    },
+    [setState]
+  )
+
   const equipOutfit = useCallback(
     (outfitId) => {
       setState((prev) => {
@@ -254,6 +317,20 @@ export function GameProvider({ children }) {
     setState(createDefaultState())
   }, [setState])
 
+  const addStudyNote = useCallback(
+    (note) => {
+      setState((prev) => ({ ...prev, notes: [...(prev.notes ?? []), note] }))
+    },
+    [setState]
+  )
+
+  const deleteStudyNote = useCallback(
+    (id) => {
+      setState((prev) => ({ ...prev, notes: (prev.notes ?? []).filter((n) => n.id !== id) }))
+    },
+    [setState]
+  )
+
   const value = useMemo(
     () => ({
       state,
@@ -265,10 +342,15 @@ export function GameProvider({ children }) {
       logAbandonedSession,
       buyItem,
       feedPet,
+      consumeFood,
+      applyFeedBoost,
       equipOutfit,
+      toggleSticker,
       setPetName,
       updateSettings,
       resetGame,
+      addStudyNote,
+      deleteStudyNote,
     }),
     [
       state,
@@ -280,10 +362,15 @@ export function GameProvider({ children }) {
       logAbandonedSession,
       buyItem,
       feedPet,
+      consumeFood,
+      applyFeedBoost,
       equipOutfit,
+      toggleSticker,
       setPetName,
       updateSettings,
       resetGame,
+      addStudyNote,
+      deleteStudyNote,
     ]
   )
 
