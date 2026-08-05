@@ -31,15 +31,16 @@ export function HomeScreen({ onStartSession }) {
           </div>
         )}
 
-        <div className="relative flex flex-col items-center justify-center py-14">
+        <div className="relative flex flex-col items-center justify-center py-10">
           <PetDisplay
-            stage={current.id}
+            stage={state.pet.stage}
             mood={mood}
             equippedOutfit={state.pet.equippedOutfit}
-            equippedStickers={state.pet.equippedStickers ?? []}
+            equippedStickers={state.pet.equippedStickers}
             activity="idle"
+            size="lg"
           />
-          <p className="mt-4 pixel-text text-sprout-charcoal text-base">{state.pet.name}</p>
+          <p className="mt-3 pixel-text text-sprout-charcoal text-base">{state.pet.name}</p>
           <p className="text-xs text-sprout-charcoal/50 font-semibold">{current.name}</p>
         </div>
       </div>

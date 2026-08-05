@@ -67,11 +67,15 @@ export function PetDisplay({
         </div>
       )}
 
-      <div className={`relative ${chewing ? '' : 'animate-breathe'} ${moodFilter}`}>
+      {/* PetSprite owns soil-anchored breathe + canopy sway for every stage */}
+      <div className={`relative ${moodFilter}`}>
         <PetSprite stage={stage} pixelSize={pixelSize} chewing={chewing} mouthOpen={mouthOpen} />
 
         {equippedOutfit !== 'none' && OUTFIT_ICON[equippedOutfit] && (
-          <div className="absolute z-10 pointer-events-none" style={{ bottom: pixelSize * 0.18, left: '50%', transform: 'translateX(-50%)' }}>
+          <div
+            className="absolute z-10 pointer-events-none"
+            style={{ bottom: pixelSize * 0.12, left: '50%', transform: 'translateX(-50%)' }}
+          >
             <PixelIcon name={OUTFIT_ICON[equippedOutfit]} size={Math.round(pixelSize * 0.32)} />
           </div>
         )}

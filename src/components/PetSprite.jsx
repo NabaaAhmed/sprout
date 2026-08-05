@@ -2,23 +2,17 @@ import { useMemo } from 'react'
 import { PixelIcon } from './icons/PixelIcon'
 
 /**
- * Procedurally builds a round "blob" body grid (charcoal outline, sage
- * fill, moss shading along the bottom, charcoal eyes + soft blush
- * cheeks). Building it from an ellipse formula — rather than hand-typing
- * every row — guarantees every row comes out the same width and keeps
- * the silhouette perfectly round (no pointed tip) at any size.
+ * Round blob body (charcoal outline, sage fill, moss shading on bottom/sides,
+ * quiet centered face). Built from an ellipse so silhouette stays round at any size.
  */
 function buildBodyGrid(size, { chewing = false, mouthOpen = false } = {}) {
   const center = (size - 1) / 2
   const radius = size / 2 - 0.5
-  const shadeFrom = size - Math.max(2, Math.round(size * 0.22))
-  // Eyes + cheeks sit right around the vertical middle of the body, well
-  // clear of the top (where the leaf/flower accessory sits) and the
-  // shaded bottom edge.
-  const eyeRow = Math.round(center)
-  const eyeOffset = Math.max(1, Math.round(radius * 0.36))
+  const shadeFrom = size - Math.max(2, Math.round(size * 0.28))
+  const eyeRow = Math.round(center) - 1
+  const eyeOffset = Math.max(1, Math.round(radius * 0.34))
   const cheekRow = eyeRow + 1
-  const cheekOffset = Math.max(2, Math.round(radius * 0.58))
+  const cheekOffset = Math.max(2, Math.round(radius * 0.55))
   const mouthRow = cheekRow + 1
 
   const dist = (x, y) => Math.hypot(x - center, y - center)
@@ -35,10 +29,11 @@ function buildBodyGrid(size, { chewing = false, mouthOpen = false } = {}) {
         dist(x - 1, y) > radius || dist(x + 1, y) > radius || dist(x, y - 1) > radius || dist(x, y + 1) > radius
       if (isEdge) {
         row += 'c'
-      } else if (y >= shadeFrom) {
-        row += 'm'
       } else {
-        row += 's'
+        const nx = Math.abs(x - center) / radius
+        const sideShade = nx > 0.52 && y >= center * 0.55
+        const bottomShade = y >= shadeFrom
+        row += sideShade || bottomShade ? 'm' : 's'
       }
     }
     rows.push(row)
@@ -57,127 +52,246 @@ function buildBodyGrid(size, { chewing = false, mouthOpen = false } = {}) {
   setCell(Math.round(center - cheekOffset), cheekRow, 'b')
   setCell(Math.round(center + cheekOffset), cheekRow, 'b')
 
-  // Mouth only appears during the feeding chew sequence so idle pets keep
-  // their original face. Closed = tiny dash; open = a slightly taller oval.
+  const mx = Math.round(center)
   if (chewing) {
-    const mx = Math.round(center)
     setCell(mx - 1, mouthRow, 'c')
     setCell(mx, mouthRow, 'c')
     setCell(mx + 1, mouthRow, 'c')
     if (mouthOpen) setCell(mx, mouthRow + 1, 'c')
+  } else {
+    setCell(mx, mouthRow, 'c')
   }
 
   return rows
 }
 
-/**
- * A small, clearly leaf-shaped silhouette: pointed at both tips, widest
- * in the middle, with a center vein — entirely self-contained within its
- * own tiny grid, so the vein can never bleed into whatever sits below it.
- */
-function buildLeafGrid() {
-  const height = 9
-  const maxHalfWidth = 3
-  const width = maxHalfWidth * 2 + 1
+/** Soft comma-curved leaf — droops gently (flip with scaleX for the other side). */
+const CURVED_LEAF = [
+  '....cc...',
+  '...cssc..',
+  '..cssmsc.',
+  '..cssssc.',
+  '.csssssc.',
+  '.cs.ssc..',
+  '..c.sc...',
+  '....c....',
+]
 
-  const rows = []
-  for (let y = 0; y < height; y++) {
-    const t = y / (height - 1)
-    const halfWidth = Math.round(maxHalfWidth * Math.sin(Math.PI * t))
-    let row = ''
-    for (let x = 0; x < width; x++) {
-      const dx = x - maxHalfWidth
-      if (Math.abs(dx) > halfWidth) row += '.'
-      else if (Math.abs(dx) === halfWidth) row += 'c'
-      else if (dx === 0) row += 'm'
-      else row += 's'
-    }
-    rows.push(row)
-  }
-  return rows
+/** Slightly fuller leaf for later stages. */
+const CURVED_LEAF_FULL = [
+  '.....cc....',
+  '....cssc...',
+  '...cssmsc..',
+  '..csssssc..',
+  '.cssssssc..',
+  '.css.sssc..',
+  '..cs.ssc...',
+  '...c.sc....',
+  '....c......',
+]
+
+/** Soft bloom flower for stages 3–4. */
+const BLOOM_FLOWER = [
+  '..c.c.c..',
+  '.cbbgbbc.',
+  'cbbgggbbc',
+  '.cbbgbbc.',
+  '..ccccc..',
+]
+
+/** Soil mounds — widen as the sprout matures. */
+const SOIL_BY_STAGE = {
+  1: [
+    '....ccccc....',
+    '...cwwwwwc...',
+    '..cwwrwwwwc..',
+    '.cwwwwwwwwwc.',
+    '.ccccccccccc.',
+  ],
+  2: [
+    '.....cccccc.....',
+    '....cwwwwwwc....',
+    '...cwwrwwwwwc...',
+    '..cwwwwwwwwwwc..',
+    '.cwwwwwwwwwwwwc.',
+    '.cccccccccccccc.',
+  ],
+  3: [
+    '......ccccccc......',
+    '.....cwwwwwwwc.....',
+    '....cwwrwwwwwwc....',
+    '...cwwwwwwwwwwwc...',
+    '..cwwwwwwwwwwwwwc..',
+    '.cwwwwwwwwwwwwwwwc.',
+    '.ccccccccccccccccc.',
+  ],
+  4: [
+    '.......cccccccc.......',
+    '......cwwwwwwwwc......',
+    '.....cwwrwwwwwwwc.....',
+    '....cwwwwwwwwwwwwc....',
+    '...cwwwwwwwwwwwwwwc...',
+    '..cwwwwwwwwwwwwwwwwc..',
+    '.cwwwwwwwwwwwwwwwwwwc.',
+    '.cccccccccccccccccccc.',
+  ],
 }
 
-const LEAF = buildLeafGrid()
-const LEAF_ASPECT = 9 / 7
-const FLOWER = ['..c.c..', '.cbbbc.', 'cbbgbbc', '.cbbbc.', '..ccc..']
+const STAGE_LAYOUT = {
+  1: { bodyCells: 15, bodyScale: 0.78, soilScale: 0.92, leafScale: 0.38 },
+  2: { bodyCells: 16, bodyScale: 0.82, soilScale: 0.96, leafScale: 0.34 },
+  3: { bodyCells: 17, bodyScale: 0.86, soilScale: 1.0, leafScale: 0.3, flowerScale: 0.42 },
+  4: { bodyCells: 18, bodyScale: 0.9, soilScale: 1.05, leafScale: 0.32, flowerScale: 0.48 },
+}
 
 function BodyLayer({ size, pixelSize, chewing, mouthOpen }) {
   const grid = useMemo(() => buildBodyGrid(size, { chewing, mouthOpen }), [size, chewing, mouthOpen])
   return <PixelIcon grid={grid} size={pixelSize} />
 }
 
-/**
- * The pet itself — a simple round pixel creature in the sage/moss palette.
- * The body is always a plain circular blob; leaves/flower are small,
- * distinct accessories stacked on top with just enough overlap (a few
- * pixels, via negative margin) for the leaf's stem tip to visually "plug
- * into" the head — never enough to merge into one pointed silhouette.
- */
-export function PetSprite({ stage = 1, pixelSize = 96, className = '', chewing = false, mouthOpen = false }) {
-  const bodySize = 15
-  const leafWidth = pixelSize * 0.3
-  const leafHeight = leafWidth * LEAF_ASPECT
-  // Sink most of the leaf's tapered tip into the head so it reads as a
-  // snug little leaf on top of the head, not a balloon floating on a stick.
-  const leafOverlap = pixelSize * 0.16
-  const flowerWidth = pixelSize * 0.4
-  const flowerOverlap = pixelSize * 0.1
+function Canopy({ stage, pixelSize, leafScale, flowerScale }) {
+  const leafPx = Math.round(pixelSize * leafScale)
+  const flowerPx = flowerScale ? Math.round(pixelSize * flowerScale) : 0
+
+  if (stage === 1) {
+    return (
+      <div style={{ width: leafPx, transformOrigin: '50% 100%' }}>
+        <PixelIcon grid={CURVED_LEAF} size={leafPx} />
+      </div>
+    )
+  }
+
+  if (stage === 2) {
+    const pairW = leafPx * 1.85
+    return (
+      <div className="relative" style={{ width: pairW, height: leafPx * 0.95 }}>
+        <div
+          className="absolute bottom-0 left-1/2"
+          style={{
+            width: leafPx,
+            transform: 'translateX(-92%) rotate(-28deg)',
+            transformOrigin: '90% 100%',
+          }}
+        >
+          <div style={{ transform: 'scaleX(-1)' }}>
+            <PixelIcon grid={CURVED_LEAF} size={leafPx} />
+          </div>
+        </div>
+        <div
+          className="absolute bottom-0 left-1/2"
+          style={{
+            width: leafPx,
+            transform: 'translateX(-8%) rotate(28deg)',
+            transformOrigin: '10% 100%',
+          }}
+        >
+          <PixelIcon grid={CURVED_LEAF} size={leafPx} />
+        </div>
+      </div>
+    )
+  }
+
+  // Stages 3–4: bloom on top, side leaves framing it
+  const frameW = Math.max(flowerPx * 1.35, leafPx * 2.1)
+  const sideLeaf = Math.round(leafPx * (stage === 4 ? 1.05 : 0.95))
+  const leafGrid = stage === 4 ? CURVED_LEAF_FULL : CURVED_LEAF
 
   return (
-    <div className={`relative inline-flex flex-col items-center ${className}`} style={{ width: pixelSize }}>
-      {stage === 1 && (
-        <div style={{ width: leafWidth, marginBottom: -leafOverlap }} className="relative z-10">
-          <PixelIcon grid={LEAF} size={leafWidth} />
-        </div>
-      )}
-
-      {stage === 2 && (
+    <div className="relative flex flex-col items-center" style={{ width: frameW }}>
+      <div className="relative z-10" style={{ width: flowerPx, marginBottom: -flowerPx * 0.12 }}>
+        <PixelIcon grid={BLOOM_FLOWER} size={flowerPx} />
+      </div>
+      <div className="relative" style={{ width: frameW, height: sideLeaf * 0.55 }}>
         <div
-          className="relative"
-          style={{ width: leafWidth * 1.3, height: leafHeight, marginBottom: -leafOverlap }}
-        >
-          <div
-            className="absolute bottom-0 left-1/2"
-            style={{ width: leafWidth, transform: 'translateX(-100%) rotate(-32deg)', transformOrigin: '100% 100%' }}
-          >
-            <PixelIcon grid={LEAF} size={leafWidth} />
-          </div>
-          <div
-            className="absolute bottom-0 left-1/2"
-            style={{ width: leafWidth, transform: 'rotate(32deg)', transformOrigin: '0% 100%' }}
-          >
-            <PixelIcon grid={LEAF} size={leafWidth} />
-          </div>
-        </div>
-      )}
-
-      {stage >= 3 && (
-        <div style={{ width: flowerWidth, marginBottom: -flowerOverlap }} className="relative z-10">
-          <PixelIcon grid={FLOWER} size={flowerWidth} />
-        </div>
-      )}
-
-      {stage >= 4 && (
-        <div
-          className="absolute inset-0 rounded-full"
+          className="absolute bottom-0 left-1/2"
           style={{
-            background: 'radial-gradient(circle, rgba(236,214,161,0.55) 0%, rgba(236,214,161,0) 70%)',
+            width: sideLeaf,
+            transform: 'translateX(-95%) rotate(-34deg)',
+            transformOrigin: '90% 100%',
+          }}
+        >
+          <div style={{ transform: 'scaleX(-1)' }}>
+            <PixelIcon grid={leafGrid} size={sideLeaf} />
+          </div>
+        </div>
+        <div
+          className="absolute bottom-0 left-1/2"
+          style={{
+            width: sideLeaf,
+            transform: 'translateX(-5%) rotate(34deg)',
+            transformOrigin: '10% 100%',
+          }}
+        >
+          <PixelIcon grid={leafGrid} size={sideLeaf} />
+        </div>
+      </div>
+    </div>
+  )
+}
+
+/**
+ * Grounded kawaii sprout: soil mound + soft canopy + two-tone body.
+ * Idle: leaf/flower sway (body/soil still) + soil-anchored body settle.
+ */
+export function PetSprite({ stage = 1, pixelSize = 96, className = '', chewing = false, mouthOpen = false }) {
+  const s = Math.min(4, Math.max(1, Math.round(stage)))
+  const layout = STAGE_LAYOUT[s]
+  const compact = pixelSize < 70
+  const bodyPx = Math.round(pixelSize * layout.bodyScale)
+  // Keep a clear soil “lip” under the body — especially at evolution-row sizes.
+  const soilPx = Math.round(pixelSize * (compact ? Math.max(layout.soilScale, 1.05) : layout.soilScale))
+  const soilTuck = Math.round(bodyPx * (compact ? 0.1 : s >= 3 ? 0.22 : 0.18))
+  const canopyTuck = Math.round(pixelSize * (s === 1 ? 0.1 : s === 2 ? 0.12 : 0.08))
+
+  return (
+    <div className={`relative inline-flex flex-col items-center ${className}`} style={{ width: Math.max(pixelSize, soilPx) }}>
+      {s >= 4 && (
+        <div
+          className="pointer-events-none absolute inset-0 rounded-full"
+          style={{
+            background: 'radial-gradient(circle, rgba(236,214,161,0.5) 0%, rgba(236,214,161,0) 68%)',
             filter: 'blur(2px)',
+            transform: 'scale(1.15)',
           }}
           aria-hidden="true"
         />
       )}
 
-      <BodyLayer size={bodySize} pixelSize={pixelSize} chewing={chewing} mouthOpen={mouthOpen} />
+      {/* Canopy sways; soil + body stay planted */}
+      <div
+        className="relative z-10 animate-leafIdle"
+        style={{
+          marginBottom: -canopyTuck,
+          transformOrigin: '50% 100%',
+        }}
+      >
+        <Canopy
+          stage={s}
+          pixelSize={pixelSize}
+          leafScale={layout.leafScale}
+          flowerScale={layout.flowerScale}
+        />
+      </div>
 
-      {stage >= 4 && (
+      <div
+        className={`relative z-[5] ${chewing ? '' : 'animate-breatheSettle'}`}
+        style={{ transformOrigin: '50% 100%', width: bodyPx }}
+      >
+        <BodyLayer size={layout.bodyCells} pixelSize={bodyPx} chewing={chewing} mouthOpen={mouthOpen} />
+      </div>
+
+      <div className="relative z-0" style={{ width: soilPx, marginTop: -soilTuck }}>
+        <PixelIcon grid={SOIL_BY_STAGE[s]} size={soilPx} />
+      </div>
+
+      {s >= 4 && pixelSize >= 64 && (
         <>
           <span
-            className="absolute top-6 -right-1 h-1.5 w-1.5 rounded-full bg-sprout-goldSoft animate-sparkle"
+            className="absolute top-[18%] right-[8%] h-1.5 w-1.5 rounded-full bg-sprout-goldSoft animate-sparkle"
             aria-hidden="true"
           />
           <span
-            className="absolute bottom-4 -left-2 h-1.5 w-1.5 rounded-full bg-sprout-goldSoft animate-sparkle"
+            className="absolute bottom-[28%] left-[6%] h-1.5 w-1.5 rounded-full bg-sprout-goldSoft animate-sparkle"
             style={{ animationDelay: '1s' }}
             aria-hidden="true"
           />

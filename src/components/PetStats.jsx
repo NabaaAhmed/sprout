@@ -104,9 +104,9 @@ export function PetStats() {
             {STAGES.map((s) => (
               <div
                 key={s.id}
-                className={`flex flex-col items-center gap-1 flex-1 ${s.id <= current.id ? '' : 'opacity-35 grayscale'}`}
+                className={`flex flex-col items-center gap-1.5 flex-1 ${s.id <= current.id ? '' : 'opacity-55'}`}
               >
-                <PetSprite stage={s.id} pixelSize={30} />
+                <PetSprite stage={s.id} pixelSize={52} />
                 <span
                   className={`text-[10px] font-bold text-center mt-1 ${
                     s.id === current.id ? 'text-sprout-moss' : 'text-sprout-charcoal/40'

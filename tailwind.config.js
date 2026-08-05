@@ -43,6 +43,25 @@ export default {
           '0%, 100%': { transform: 'scaleY(1) translateY(0)' },
           '50%': { transform: 'scaleY(1.015) translateY(-1.5px)' },
         },
+        // Stage 1 body: soft settle from the soil line (origin set in JSX).
+        breatheSettle: {
+          '0%, 100%': { transform: 'scale(1)' },
+          '50%': { transform: 'scaleY(1.028) scaleX(1.012)' },
+        },
+        // Leaf: ~3.5s sway cycles, then a quick double-tilt charm ~every 9s.
+        leafIdle: {
+          '0%': { transform: 'rotate(-3.5deg)' },
+          '18%': { transform: 'rotate(3.5deg)' },
+          '36%': { transform: 'rotate(-3.5deg)' },
+          '54%': { transform: 'rotate(3.5deg)' },
+          '72%': { transform: 'rotate(-3.5deg)' },
+          '80%': { transform: 'rotate(-2deg)' },
+          '84%': { transform: 'rotate(9deg)' },
+          '88%': { transform: 'rotate(-8deg)' },
+          '92%': { transform: 'rotate(5deg)' },
+          '96%, 100%': { transform: 'rotate(-3.5deg)' },
+        },
+
         // Calm settle-in: gentle fade + tiny rise, no overshoot/bounce.
         settleIn: {
           '0%': { opacity: '0', transform: 'scale(0.98) translateY(4px)' },
@@ -79,6 +98,8 @@ export default {
       },
       animation: {
         breathe: 'breathe 4.2s ease-in-out infinite',
+        breatheSettle: 'breatheSettle 3.8s ease-in-out infinite',
+        leafIdle: 'leafIdle 9s ease-in-out infinite',
         settleIn: 'settleIn 0.45s ease-out',
         fadeIn: 'fadeIn 0.2s ease-out',
         sparkle: 'sparkle 2.6s ease-in-out infinite',
@@ -87,6 +108,7 @@ export default {
         foodPop: 'foodPop 0.32s ease-out both',
         foodFade: 'foodFade 0.28s ease-in both',
       },
+
     },
   },
   plugins: [],

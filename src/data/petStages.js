@@ -4,25 +4,25 @@ export const STAGES = [
     id: 1,
     name: 'Seedling',
     minMinutes: 0,
-    blurb: 'A tiny sprout with a leaf-nub. So much growing ahead!',
+    blurb: 'A tiny sprout peeking from its soil mound. So much growing ahead!',
   },
   {
     id: 2,
     name: 'Sprig',
     minMinutes: 5 * 60,
-    blurb: 'A small leafy creature — look, it grew a second little leaf!',
+    blurb: 'Two soft leaves now — settled deeper in the dirt and looking proud.',
   },
   {
     id: 3,
     name: 'Bloom',
     minMinutes: 20 * 60,
-    blurb: 'A flower bloomed on its head. Bigger and fluffier now.',
+    blurb: 'A little flower opened on top. Bigger mound, fluffier sprout.',
   },
   {
     id: 4,
     name: 'Ancient Bloom',
     minMinutes: 50 * 60,
-    blurb: 'Glowing softly, with tiny fireflies drifting around it.',
+    blurb: 'Rooted and glowing — fireflies drift around its fullest bloom.',
   },
 ]
 
