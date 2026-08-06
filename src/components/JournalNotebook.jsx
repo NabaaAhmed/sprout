@@ -18,9 +18,7 @@ function formatEdited(iso) {
   }
 }
 
-/**
- * Multi-page personal notebook for Journal — no AI, local-only.
- */
+// multi-page notebook in Journal — no ai, just local notes
 export function JournalNotebook() {
   const { state, addJournalPage, updateJournalPage, deleteJournalPage } = useGame()
   const pages = state.journalPages ?? []

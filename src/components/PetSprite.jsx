@@ -1,10 +1,8 @@
 import { useMemo } from 'react'
 import { PixelIcon } from './icons/PixelIcon'
 
-/**
- * Round blob body (charcoal outline, sage fill, moss shading on bottom/sides,
- * quiet centered face). Built from an ellipse so silhouette stays round at any size.
- */
+// round blob body — charcoal outline, sage fill, a little moss shading.
+// built from an ellipse so it stays round at weird sizes
 function buildBodyGrid(size, { chewing = false, mouthOpen = false } = {}) {
   const center = (size - 1) / 2
   const radius = size / 2 - 0.5
@@ -65,7 +63,7 @@ function buildBodyGrid(size, { chewing = false, mouthOpen = false } = {}) {
   return rows
 }
 
-/** Soft comma-curved leaf — droops gently (flip with scaleX for the other side). */
+// soft curved leaf — flip with scaleX for the other side
 const CURVED_LEAF = [
   '....cc...',
   '...cssc..',
@@ -77,7 +75,7 @@ const CURVED_LEAF = [
   '....c....',
 ]
 
-/** Slightly fuller leaf for later stages. */
+// a bit fuller for later stages
 const CURVED_LEAF_FULL = [
   '.....cc....',
   '....cssc...',
@@ -90,7 +88,7 @@ const CURVED_LEAF_FULL = [
   '....c......',
 ]
 
-/** Soft bloom flower for stages 3–4. */
+// little bloom for stages 3–4
 const BLOOM_FLOWER = [
   '..c.c.c..',
   '.cbbgbbc.',
@@ -99,7 +97,7 @@ const BLOOM_FLOWER = [
   '..ccccc..',
 ]
 
-/** Soil mounds — widen as the sprout matures. */
+// soil mounds get wider as it grows
 const SOIL_BY_STAGE = {
   1: [
     '....ccccc....',
@@ -191,7 +189,7 @@ function Canopy({ stage, pixelSize, leafScale, flowerScale }) {
     )
   }
 
-  // Stages 3–4: bloom on top, side leaves framing it
+  // stages 3–4: bloom on top, leaves framing it
   const frameW = Math.max(flowerPx * 1.35, leafPx * 2.1)
   const sideLeaf = Math.round(leafPx * (stage === 4 ? 1.05 : 0.95))
   const leafGrid = stage === 4 ? CURVED_LEAF_FULL : CURVED_LEAF
@@ -229,16 +227,14 @@ function Canopy({ stage, pixelSize, leafScale, flowerScale }) {
   )
 }
 
-/**
- * Grounded kawaii sprout: soil mound + soft canopy + two-tone body.
- * Idle: leaf/flower sway (body/soil still) + soil-anchored body settle.
- */
+// grounded little sprout: soil + canopy + blob body
+// idle = leaf/flower sway, body settles on the soil (took a while to feel right)
 export function PetSprite({ stage = 1, pixelSize = 96, className = '', chewing = false, mouthOpen = false }) {
   const s = Math.min(4, Math.max(1, Math.round(stage)))
   const layout = STAGE_LAYOUT[s]
   const compact = pixelSize < 70
   const bodyPx = Math.round(pixelSize * layout.bodyScale)
-  // Keep a clear soil “lip” under the body — especially at evolution-row sizes.
+  // keep a soil "lip" under the body — matters more at tiny evolution-row sizes
   const soilPx = Math.round(pixelSize * (compact ? Math.max(layout.soilScale, 1.05) : layout.soilScale))
   const soilTuck = Math.round(bodyPx * (compact ? 0.1 : s >= 3 ? 0.22 : 0.18))
   const canopyTuck = Math.round(pixelSize * (s === 1 ? 0.1 : s === 2 ? 0.12 : 0.08))

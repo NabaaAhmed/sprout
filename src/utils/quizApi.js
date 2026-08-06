@@ -1,17 +1,13 @@
 const REQUEST_TIMEOUT_MS = 45000
 
-/**
- * Cloudflare Worker URL from Vite env (never put the Gemini key in the frontend).
- * See .env.example and cloudflare-worker/README.md.
- */
+// grabs the quiz endpoint url from vite env — don't put api keys in the frontend!!
+// setup notes are in .env.example + cloudflare-worker/README.md
 export function getQuizWorkerUrl() {
   return (import.meta.env.VITE_QUIZ_WORKER_URL ?? '').trim()
 }
 
-/**
- * Validates quiz shape used by Quiz.jsx:
- * [{ type, question, options?, answer }, ...]
- */
+// quick sanity check so we don't hand Quiz.jsx garbage
+// shape: [{ type, question, options?, answer }, ...]
 function isValidQuiz(quiz) {
   if (!Array.isArray(quiz) || quiz.length === 0) return false
   return quiz.every((q) => {
@@ -24,13 +20,8 @@ function isValidQuiz(quiz) {
   })
 }
 
-/**
- * Calls the Cloudflare Worker (Gemini proxy) to turn study notes into a quiz.
- * Always resolves — never throws — so the UI can show a friendly message.
- *
- * @param {string} notesText
- * @returns {Promise<{ ok: true, quiz: Array } | { ok: false, error: string }>}
- */
+// hits the quiz endpoint with study notes.
+// always returns { ok, ... } instead of throwing — ui just shows a friendly msg
 export async function generateQuiz(notesText) {
   const workerUrl = getQuizWorkerUrl()
   if (!workerUrl) {

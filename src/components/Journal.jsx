@@ -6,7 +6,7 @@ import { JournalNotebook } from './JournalNotebook'
 const WEEKS_TO_SHOW = 18
 const DAY_MS = 24 * 60 * 60 * 1000
 const WEEKDAY_NAMES = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday']
-/** Row labels (Sun-first grid): show Mon / Wed / Fri like GitHub. */
+// sun-first grid but only label mon/wed/fri so it isn't cramped
 const DOW_LABELS = [
   { row: 1, text: 'Mon' },
   { row: 3, text: 'Wed' },
@@ -121,7 +121,7 @@ export function Journal() {
       weeks.push(days)
     }
 
-    // Month label above the week column that contains the 1st of that month.
+    // stick the month name over the week that has the 1st
     const monthLabels = []
     for (let w = 0; w < weeks.length; w++) {
       const firstOfMonth = weeks[w].find((day) => day.date.getDate() === 1)
@@ -131,7 +131,7 @@ export function Journal() {
         label: firstOfMonth.date.toLocaleDateString(undefined, { month: 'short' }),
       })
     }
-    // If the range starts mid-month, label the first column with that month too.
+    // if we start mid-month, still label col 0 so it's not blank
     if (monthLabels.length === 0 || monthLabels[0].weekIndex > 0) {
       const startDay = weeks[0][0]
       const already = monthLabels.some((m) => m.weekIndex === 0)

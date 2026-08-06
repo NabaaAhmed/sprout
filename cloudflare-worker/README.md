@@ -1,8 +1,8 @@
-# Sprout Quiz Worker (Gemini proxy)
+# Quiz backend setup
 
-Tiny Cloudflare Worker between the Sprout frontend and Google Gemini. The API key stays here as a secret — never in the frontend.
+little cloudflare worker for sprout's quiz feature. keeps the model api key on the server — never in the frontend.
 
-No user sign-in in the app. You deploy once; players just hit **Generate Quiz**.
+players don't sign in; they just hit **Generate Quiz**. you deploy this once and point the app at the url.
 
 ## Deploy
 
@@ -13,15 +13,15 @@ npx wrangler secret put GEMINI_API_KEY   # paste key from https://aistudio.googl
 npx wrangler deploy
 ```
 
-Copy the printed `*.workers.dev` URL into the app root `.env`:
+copy the printed `*.workers.dev` url into the app root `.env`:
 
 ```
 VITE_QUIZ_WORKER_URL=https://sprout-quiz-worker.sprout-nabaa.workers.dev
 ```
 
-(Your account’s workers.dev subdomain is `sprout-nabaa`.)
+(my account's workers.dev subdomain is `sprout-nabaa`.)
 
-Restart `npm run dev` (or redeploy GitHub Pages) so Vite picks up the env var.
+restart `npm run dev` (or redeploy github pages) so the app picks up the env var.
 
 ## Dashboard alternative
 
@@ -30,6 +30,6 @@ Restart `npm run dev` (or redeploy GitHub Pages) so Vite picks up the env var.
 3. Settings → Variables → add encrypted `GEMINI_API_KEY`  
 4. Copy the worker URL into `.env` as above  
 
-## Gemini key
+## API key
 
-Get a free key at [Google AI Studio](https://aistudio.google.com/apikey). If age verification blocks you on one Google account, try another or wait — Puter was the workaround we removed because it forced player sign-in.
+get a free key at [Google AI Studio](https://aistudio.google.com/apikey).

@@ -38,7 +38,7 @@ function createDefaultJournalPages() {
 }
 
 function normalizeJournalPages(raw) {
-  // Once journalPages exists (even empty), respect it — don't re-seed defaults.
+  // if journalPages is already there (even empty), leave it alone — don't re-seed defaults
   if (Array.isArray(raw?.journalPages)) {
     return raw.journalPages
       .filter((p) => p && typeof p === 'object')
@@ -97,15 +97,15 @@ function createDefaultState() {
       stickers: [],
     },
     sessionHistory: [],
-    /** @deprecated Legacy study-note entries; kept for soft-merge of old saves. */
+    // old study-note list — kept around so older saves still merge cleanly
     notes: [],
-    /** Draft text for the Quiz tab input (persists across refresh). */
+    // quiz tab draft (survives refresh, which i definitely wanted)
     quizNotesDraft: '',
-    /** @deprecated Migrated into journalPages; kept for soft-merge of old saves. */
+    // old single-string journal — migrated into journalPages now
     journalNotes: '',
-    /** Multi-page Journal notebook (no AI). */
+    // multi-page notebook (no ai, just local notes)
     journalPages: createDefaultJournalPages(),
-    /** Completed quiz attempts with scores. */
+    // past quiz runs + scores
     quizAttempts: [],
     settings: {
       soundOn: true,
@@ -115,7 +115,7 @@ function createDefaultState() {
   }
 }
 
-/** Soft-merge older localStorage saves that predate stickers/notes fields. */
+// fill in missing fields from older localStorage saves (stickers/notes/etc)
 function normalizeState(raw) {
   const defaults = createDefaultState()
   if (!raw || typeof raw !== 'object') return defaults
@@ -323,10 +323,9 @@ export function GameProvider({ children }) {
     [setState, daysSinceInteraction]
   )
 
-  // Split out of feedPet so the UI can play a feeding/chewing animation and
-  // only apply the real affection change once that sequence finishes, while
-  // still consuming the item from inventory immediately (so it can't be
-  // double-fed while the animation plays).
+  // pulled out of feedPet so the ui can do the chew animation first —
+  // item leaves inventory right away (no double-feed) but affection waits
+  // until the animation's done. not sure if best but it works.
   const consumeFood = useCallback(
     (foodId) => {
       const item = SHOP_ITEMS.find((i) => i.id === foodId && i.category === 'food')

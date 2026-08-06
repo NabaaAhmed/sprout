@@ -3,11 +3,11 @@ main = "worker.js"
 compatibility_date = "2025-10-01"
 workers_dev = true
 
-# Store your Gemini API key as a secret (never commit it):
+# put the model api key as a secret (never commit it!!):
 #   npx wrangler secret put GEMINI_API_KEY
 #
-# Then deploy:
+# then deploy:
 #   npx wrangler deploy
 #
-# Live URL:
+# live url:
 #   https://sprout-quiz-worker.sprout-nabaa.workers.dev

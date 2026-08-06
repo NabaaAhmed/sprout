@@ -11,11 +11,11 @@ const FRIENDLY_ERROR = "Couldn't generate a quiz right now — try again in a mo
 function errorMessageFor(code) {
   if (code === 'empty-notes') return 'Paste some study notes first, then generate a quiz.'
   if (code === 'not-configured') {
-    return 'Quiz worker not configured yet — set VITE_QUIZ_WORKER_URL in your .env.'
+    return 'Quiz isn’t available right now — try again later.'
   }
   if (code === 'timeout') return 'That took too long — try again with a shorter note.'
   if (typeof code === 'string' && code.startsWith('request-failed-429')) {
-    return 'Gemini is rate-limiting right now — wait a minute and try again.'
+    return 'Quiz is busy right now — wait a minute and try again.'
   }
   return FRIENDLY_ERROR
 }
@@ -51,12 +51,12 @@ export function Quiz() {
   const { state, setQuizNotesDraft, awardSproutPoints, saveQuizAttempt } = useGame()
   const notes = state.quizNotesDraft ?? ''
   const workerConfigured = Boolean(getQuizWorkerUrl())
-  const [phase, setPhase] = useState('compose') // compose | taking | results
+  const [phase, setPhase] = useState('compose') // compose → taking → results
   const [isGenerating, setIsGenerating] = useState(false)
   const [error, setError] = useState(null)
   const [toast, setToast] = useState(null)
   const [activeQuiz, setActiveQuiz] = useState(null) // { notesText, questions }
-  const [answers, setAnswers] = useState({}) // index -> string (option text or typed)
+  const [answers, setAnswers] = useState({}) // q index → what they picked/typed
   const [result, setResult] = useState(null)
 
   const attemptsNewestFirst = useMemo(
@@ -166,8 +166,7 @@ export function Quiz() {
 
           {!workerConfigured && (
             <p className="text-[11px] font-semibold text-sprout-brown bg-sprout-goldSoft/40 border border-sprout-gold/40 rounded-xl px-3 py-2 leading-relaxed">
-              Quiz worker not configured yet — set <code className="font-mono">VITE_QUIZ_WORKER_URL</code> in your{' '}
-              <code className="font-mono">.env</code> (see cloudflare-worker/README.md).
+              Quiz isn’t available right now — try again later.
             </p>
           )}
 
@@ -200,8 +199,7 @@ export function Quiz() {
           )}
 
           <p className="text-[11px] text-sprout-charcoal/40 leading-relaxed">
-            No sign-in needed — quizzes run through your Cloudflare Worker → Gemini.
-            Earn {SP_PER_CORRECT} SP per correct answer.
+            Paste your notes, get a quick quiz — no sign-in needed. Earn {SP_PER_CORRECT} SP per correct answer.
           </p>
         </div>
       )}

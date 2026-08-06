@@ -1,11 +1,11 @@
 /**
- * Sprout quiz proxy — Cloudflare Worker.
+ * sprout quiz endpoint — tiny cloudflare worker
  *
- * Receives study notes from the frontend, calls Gemini with a server-side
- * API key (never exposed to the browser), returns a strict JSON quiz.
+ * app sends study notes → we call the model with a server-side key
+ * (never in the browser) → send back a strict json quiz.
  *
- * Secret (set via `npx wrangler secret put GEMINI_API_KEY`):
- *   GEMINI_API_KEY
+ * set the secret once:
+ *   npx wrangler secret put GEMINI_API_KEY
  */
 
 const MODEL = 'gemini-flash-latest'
@@ -54,6 +54,7 @@ function jsonResponse(body, status, origin) {
   })
 }
 
+// same shape check as the frontend — don't ship a half-baked quiz
 function isValidQuiz(quiz) {
   if (!Array.isArray(quiz) || quiz.length < 3 || quiz.length > 5) return false
   return quiz.every((q) => {
@@ -69,6 +70,7 @@ function isValidQuiz(quiz) {
   })
 }
 
+// models love wrapping json in ``` fences... this took me forever to harden
 function extractJson(text) {
   const trimmed = String(text ?? '').trim()
   try {
@@ -79,7 +81,7 @@ function extractJson(text) {
       try {
         return JSON.parse(fenced[1].trim())
       } catch {
-        /* fall through */
+        /* try the bracket slice next */
       }
     }
     const start = trimmed.indexOf('[')
@@ -106,7 +108,7 @@ export default {
     }
 
     if (!env.GEMINI_API_KEY) {
-      return jsonResponse({ error: 'Server misconfigured: missing GEMINI_API_KEY' }, 500, origin)
+      return jsonResponse({ error: 'Quiz isn’t available right now — try again later.' }, 500, origin)
     }
 
     let payload
@@ -148,22 +150,15 @@ export default {
         }),
       })
     } catch {
-      return jsonResponse({ error: 'Failed to reach Gemini' }, 502, origin)
+      return jsonResponse({ error: 'Quiz service unreachable' }, 502, origin)
     }
 
     if (!geminiRes.ok) {
-      let detail = ''
-      try {
-        const errBody = await geminiRes.json()
-        detail = errBody?.error?.message || ''
-      } catch {
-        /* ignore parse errors */
-      }
       const status = geminiRes.status === 429 ? 429 : 502
       const message =
         geminiRes.status === 429
-          ? 'Gemini rate limit hit — wait a minute and try again.'
-          : `Gemini error (${geminiRes.status})${detail ? `: ${detail}` : ''}`
+          ? 'Quiz is busy right now — wait a minute and try again.'
+          : 'Couldn’t generate a quiz right now — try again in a moment.'
       return jsonResponse({ error: message }, status, origin)
     }
 
@@ -171,14 +166,14 @@ export default {
     try {
       geminiJson = await geminiRes.json()
     } catch {
-      return jsonResponse({ error: 'Invalid Gemini response' }, 502, origin)
+      return jsonResponse({ error: 'Invalid quiz response' }, 502, origin)
     }
 
     const text = geminiJson?.candidates?.[0]?.content?.parts?.map((p) => p.text).join('') ?? ''
     const quiz = extractJson(text)
 
     if (!isValidQuiz(quiz)) {
-      return jsonResponse({ error: 'Quiz failed schema validation' }, 502, origin)
+      return jsonResponse({ error: 'Couldn’t generate a quiz right now — try again in a moment.' }, 502, origin)
     }
 
     return jsonResponse({ quiz }, 200, origin)
