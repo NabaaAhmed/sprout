@@ -15,6 +15,51 @@ function nowISO() {
   return new Date().toISOString()
 }
 
+const DEFAULT_JOURNAL_TITLES = ['English', 'Math', 'Research', 'Biology', 'Random thoughts']
+const MAX_PAGE_TITLE = 60
+const MAX_PAGE_CONTENT = 20000
+
+function makeJournalPageId(seed = '') {
+  const slug = String(seed)
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-|-$/g, '')
+    .slice(0, 24)
+  return `page-${slug || 'note'}-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 7)}`
+}
+
+function createDefaultJournalPages() {
+  return DEFAULT_JOURNAL_TITLES.map((title, i) => ({
+    id: `page-default-${i}-${title.toLowerCase().replace(/\s+/g, '-')}`,
+    title,
+    content: '',
+    lastEdited: nowISO(),
+  }))
+}
+
+function normalizeJournalPages(raw) {
+  // Once journalPages exists (even empty), respect it — don't re-seed defaults.
+  if (Array.isArray(raw?.journalPages)) {
+    return raw.journalPages
+      .filter((p) => p && typeof p === 'object')
+      .map((p, i) => ({
+        id: typeof p.id === 'string' && p.id ? p.id : makeJournalPageId(`migrated-${i}`),
+        title: String(p.title ?? 'Untitled').trim().slice(0, MAX_PAGE_TITLE) || 'Untitled',
+        content: String(p.content ?? '').slice(0, MAX_PAGE_CONTENT),
+        lastEdited: typeof p.lastEdited === 'string' ? p.lastEdited : nowISO(),
+      }))
+  }
+
+  const pages = createDefaultJournalPages()
+  const legacy = typeof raw?.journalNotes === 'string' ? raw.journalNotes.trim() : ''
+  if (legacy) {
+    const target = pages.find((p) => p.title === 'Random thoughts') ?? pages[0]
+    target.content = legacy.slice(0, MAX_PAGE_CONTENT)
+    target.lastEdited = nowISO()
+  }
+  return pages
+}
+
 function startOfDay(date) {
   const d = new Date(date)
   d.setHours(0, 0, 0, 0)
@@ -56,8 +101,10 @@ function createDefaultState() {
     notes: [],
     /** Draft text for the Quiz tab input (persists across refresh). */
     quizNotesDraft: '',
-    /** Freeform Journal notes (no AI). */
+    /** @deprecated Migrated into journalPages; kept for soft-merge of old saves. */
     journalNotes: '',
+    /** Multi-page Journal notebook (no AI). */
+    journalPages: createDefaultJournalPages(),
     /** Completed quiz attempts with scores. */
     quizAttempts: [],
     settings: {
@@ -91,6 +138,7 @@ function normalizeState(raw) {
     notes: Array.isArray(raw.notes) ? raw.notes : [],
     quizNotesDraft: typeof raw.quizNotesDraft === 'string' ? raw.quizNotesDraft : '',
     journalNotes: typeof raw.journalNotes === 'string' ? raw.journalNotes : '',
+    journalPages: normalizeJournalPages(raw),
     quizAttempts: Array.isArray(raw.quizAttempts) ? raw.quizAttempts : [],
     settings: {
       ...defaults.settings,
@@ -365,9 +413,54 @@ export function GameProvider({ children }) {
     [setState]
   )
 
-  const setJournalNotes = useCallback(
-    (text) => {
-      setState((prev) => ({ ...prev, journalNotes: String(text ?? '').slice(0, 20000) }))
+  const addJournalPage = useCallback(
+    (title) => {
+      const trimmed = String(title ?? '')
+        .trim()
+        .slice(0, MAX_PAGE_TITLE)
+      if (!trimmed) return null
+      const page = {
+        id: makeJournalPageId(trimmed),
+        title: trimmed,
+        content: '',
+        lastEdited: nowISO(),
+      }
+      setState((prev) => ({
+        ...prev,
+        journalPages: [...(prev.journalPages ?? []), page],
+      }))
+      return page.id
+    },
+    [setState]
+  )
+
+  const updateJournalPage = useCallback(
+    (id, patch) => {
+      setState((prev) => ({
+        ...prev,
+        journalPages: (prev.journalPages ?? []).map((page) => {
+          if (page.id !== id) return page
+          const next = { ...page, lastEdited: nowISO() }
+          if (typeof patch?.title === 'string') {
+            const title = patch.title.trim().slice(0, MAX_PAGE_TITLE)
+            if (title) next.title = title
+          }
+          if (typeof patch?.content === 'string') {
+            next.content = patch.content.slice(0, MAX_PAGE_CONTENT)
+          }
+          return next
+        }),
+      }))
+    },
+    [setState]
+  )
+
+  const deleteJournalPage = useCallback(
+    (id) => {
+      setState((prev) => ({
+        ...prev,
+        journalPages: (prev.journalPages ?? []).filter((page) => page.id !== id),
+      }))
     },
     [setState]
   )
@@ -413,7 +506,9 @@ export function GameProvider({ children }) {
       updateSettings,
       resetGame,
       setQuizNotesDraft,
-      setJournalNotes,
+      addJournalPage,
+      updateJournalPage,
+      deleteJournalPage,
       awardSproutPoints,
       saveQuizAttempt,
     }),
@@ -435,7 +530,9 @@ export function GameProvider({ children }) {
       updateSettings,
       resetGame,
       setQuizNotesDraft,
-      setJournalNotes,
+      addJournalPage,
+      updateJournalPage,
+      deleteJournalPage,
       awardSproutPoints,
       saveQuizAttempt,
     ]
