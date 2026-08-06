@@ -52,7 +52,7 @@ function yearRangeLabel(startDate, endDate) {
 
 export function Journal() {
   const { state } = useGame()
-  const [heatTip, setHeatTip] = useState(null)
+  const [hoveredHeatTip, setHoveredHeatTip] = useState(null)
 
   const minutesByDay = useMemo(() => {
     const map = new Map()
@@ -151,6 +151,17 @@ export function Journal() {
       today,
     }
   }, [minutesByDay, sessionsByDay])
+
+  const todayHeatTip = useMemo(() => {
+    const todayKey = isoDateKey(heatmap.today)
+    for (const week of heatmap.weeks) {
+      const day = week.find((d) => d.key === todayKey)
+      if (day) return formatHeatTip(day)
+    }
+    return null
+  }, [heatmap])
+
+  const heatTip = hoveredHeatTip ?? todayHeatTip
 
   const thisWeek = useMemo(() => {
     const today = new Date()
@@ -262,7 +273,11 @@ export function Journal() {
               ))}
             </div>
 
-            <div className="flex" style={{ gap: GAP_PX }}>
+            <div
+              className="flex"
+              style={{ gap: GAP_PX }}
+              onMouseLeave={() => setHoveredHeatTip(null)}
+            >
               {heatmap.weeks.map((week, wi) => (
                 <div key={wi} className="flex flex-col" style={{ gap: GAP_PX }}>
                   {week.map((day) => {
@@ -274,8 +289,8 @@ export function Journal() {
                         title={tip}
                         aria-label={tip}
                         disabled={day.isFuture}
-                        onClick={() => setHeatTip(tip)}
-                        onMouseEnter={() => setHeatTip(tip)}
+                        onClick={() => setHoveredHeatTip(tip)}
+                        onMouseEnter={() => setHoveredHeatTip(tip)}
                         className={`h-3 w-3 rounded-sm transition-opacity duration-200 ${
                           day.isFuture
                             ? 'bg-transparent cursor-default'
